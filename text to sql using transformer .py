@@ -114,3 +114,10 @@ def stopWordsRemove(sentence):
     return finalSentence
 
 df['question'] = df['question'].apply(stopWordsRemove)
+
+#Lemmatization
+lemma = WordNetLemmatizer()
+def lemmatization(text):
+    return " ".join([lemma.lemmatize(word, pos = 'n') for word in text.split()])
+
+df['question'] = df['question'].apply(lemmatization)
