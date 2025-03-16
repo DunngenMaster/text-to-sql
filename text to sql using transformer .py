@@ -151,3 +151,15 @@ plt.imshow(wordcloud, interpolation='bilinear')
 plt.axis('off')
 plt.title('2. Word Cloud of Questions')
 plt.show()
+
+
+df['questionType'] = df['question'].apply(lambda x: x.split()[0].lower())
+question_type_counts = df['questionType'].value_counts().head(10)
+question_type_counts = question_type_counts.reset_index()
+question_type_counts.columns = ['Question Type', 'Frequency']
+plt.figure(figsize=(10, 6))
+sns.barplot(x='Frequency', y='Question Type', data=question_type_counts, palette='coolwarm')
+plt.title('4. Top Question Types')
+plt.xlabel('Frequency')
+plt.ylabel('Question Type')
+plt.show()
