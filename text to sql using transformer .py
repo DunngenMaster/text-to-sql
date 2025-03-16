@@ -14,6 +14,9 @@ pip install seaborn
 pip install wordcloud
 pip install torch
 pip install transformer
+pip install sentencepiece
+pip install tensorflow
+
 """
 
 
@@ -38,6 +41,12 @@ from transformers import T5Tokenizer, T5ForConditionalGeneration, AdamW
 from torch.utils.data import DataLoader, Dataset
 from sklearn.model_selection import train_test_split
 from torch.optim import Adam
+
+import tensorflow as tf
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Embedding, Dense, LayerNormalization, Dropout, MultiHeadAttention
+
+
 
 
 # download stopwords and Dictnoray for our NLP task
@@ -183,3 +192,73 @@ plt.show()
 
 X = df['question'].tolist()
 y = df['sql'].tolist()
+
+
+tokenizer = T5Tokenizer.from_pretrained('t5-small')
+def tokenize_texts(text_list, max_length=512):
+    return tokenizer(
+        text_list,
+        max_length=max_length,
+        padding='max_length',
+        truncation=True,
+        return_tensors='np'
+    )
+
+X_tokenized = tokenize_texts(X)
+y_tokenized = tokenize_texts(y)
+
+X_train, X_temp, y_train, y_temp = train_test_split(X_tokenized['input_ids'], y_tokenized['input_ids'], test_size=0.2, random_state=42)
+X_val, X_test, y_val, y_test = train_test_split(X_temp, y_temp, test_size=0.5, random_state=42)
+
+
+#training the model 
+def transformer_encoder(inputs, head_size, num_heads, ff_dim, dropout_rate):
+    attention = MultiHeadAttention(num_heads=num_heads, key_dim=head_size)(inputs, inputs)
+    attention = Dropout(dropout_rate)(attention)
+    attention = LayerNormalization(epsilon=1e-6)(attention + inputs)
+
+    ff_output = Dense(ff_dim, activation='relu')(attention)
+    ff_output = Dense(inputs.shape[-1])(ff_output)
+    ff_output = Dropout(dropout_rate)(ff_output)
+    encoder_output = LayerNormalization(epsilon=1e-6)(ff_output + attention)
+    return encoder_output
+
+def transformer_decoder(inputs, enc_output, head_size, num_heads, ff_dim, dropout_rate):
+    self_attention = MultiHeadAttention(num_heads=num_heads, key_dim=head_size)(inputs, inputs)
+    self_attention = Dropout(dropout_rate)(self_attention)
+    self_attention = LayerNormalization(epsilon=1e-6)(self_attention + inputs)
+
+    attention = MultiHeadAttention(num_heads=num_heads, key_dim=head_size)(self_attention, enc_output)
+    attention = Dropout(dropout_rate)(attention)
+    attention = LayerNormalization(epsilon=1e-6)(attention + self_attention)
+
+    ff_output = Dense(ff_dim, activation='relu')(attention)
+    ff_output = Dense(inputs.shape[-1])(ff_output)
+    ff_output = Dropout(dropout_rate)(ff_output)
+    decoder_output = LayerNormalization(epsilon=1e-6)(ff_output + attention)
+    return decoder_output
+
+
+embedding_dim = 256
+vocab_size = 32128
+head_size = 64
+num_heads = 8
+ff_dim = 512
+dropout_rate = 0.1
+max_length = 512
+
+inputs_enc = Input(shape=(None,))
+inputs_dec = Input(shape=(None,))
+
+enc_emb = Embedding(input_dim=vocab_size, output_dim=embedding_dim)(inputs_enc)
+dec_emb = Embedding(input_dim=vocab_size, output_dim=embedding_dim)(inputs_dec)
+
+enc_output = transformer_encoder(enc_emb, head_size, num_heads, ff_dim, dropout_rate)
+dec_output = transformer_decoder(dec_emb, enc_output, head_size, num_heads, ff_dim, dropout_rate)
+
+final_output = Dense(vocab_size, activation='softmax')(dec_output)
+
+model = Model(inputs=[inputs_enc, inputs_dec], outputs=final_output)
+model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
+
+model.summary()
