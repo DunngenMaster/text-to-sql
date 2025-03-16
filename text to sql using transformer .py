@@ -121,3 +121,14 @@ def lemmatization(text):
     return " ".join([lemma.lemmatize(word, pos = 'n') for word in text.split()])
 
 df['question'] = df['question'].apply(lemmatization)
+
+# Remove extra punctuation from SQL
+exclude_punctuations = "=/()"
+punctuations = string.punctuation
+punctuations = punctuations.translate(str.maketrans('', '', exclude_punctuations))
+
+def deletePunctuationSQL(sentence):
+    translator = str.maketrans('', '', punctuations)
+    return sentence.translate(translator)
+
+df['sql'] = df['sql'].apply(deletePunctuationSQL)
