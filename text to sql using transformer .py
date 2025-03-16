@@ -262,3 +262,15 @@ model = Model(inputs=[inputs_enc, inputs_dec], outputs=final_output)
 model.compile(optimizer='adam', loss='sparse_categorical_crossentropy')
 
 model.summary()
+
+y_train_shifted = np.pad(y_train[:, :-1], ((0, 0), (1, 0)), mode='constant', constant_values=tokenizer.pad_token_id)
+y_val_shifted = np.pad(y_val[:, :-1], ((0, 0), (1, 0)), mode='constant', constant_values=tokenizer.pad_token_id)
+
+history = model.fit(
+    [X_train, y_train_shifted],
+    y_train,
+    validation_data=([X_val, y_val_shifted], y_val),
+    batch_size=5,
+    epochs=10
+)
+model.save('my_transformer_model.h5')
