@@ -163,3 +163,20 @@ plt.title('4. Top Question Types')
 plt.xlabel('Frequency')
 plt.ylabel('Question Type')
 plt.show()
+
+
+dv=df.copy()
+
+dv['query_length'] = df['sql'].apply(lambda x: len(x.split()))
+dv['sql_complexity'] = df['sql'].apply(lambda x: x.upper().count('SELECT') + x.upper().count('WHERE'))
+dv['num_conditions'] = df['sql'].apply(lambda x: x.upper().count('AND') + x.upper().count('OR') + 1 if 'WHERE' in x.upper() else 0)
+dv['sql_length'] = df['sql'].apply(lambda x: len(x.split()))
+corr_matrix = dv[['query_length', 'sql_complexity', 'num_conditions', 'sql_length']].corr()
+plt.figure(figsize=(10, 8))
+sns.heatmap(corr_matrix, annot=True, cmap='coolwarm', square=True, linewidths=.5, cbar_kws={"shrink": .5})
+plt.title('6. Correlation Matrix of SQL Query Features')
+plt.show()
+
+sns.pairplot(dv[['query_length', 'sql_complexity', 'num_conditions', 'sql_length']])
+plt.suptitle('7. Pairwise Relationships Between Features', verticalalignment='top')
+plt.show()
