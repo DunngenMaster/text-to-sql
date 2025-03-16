@@ -142,3 +142,12 @@ plt.title('1. Distribution Of Question Lengths')
 plt.xlabel('Question Length (in words)')
 plt.ylabel('Frequency')
 plt.show()
+
+#plot word cloud
+all_questions = ' '.join(df['question'].tolist())
+wordcloud = WordCloud(width=800, height=400, background_color ='white').generate(all_questions)
+plt.figure(figsize=(10, 7))
+plt.imshow(wordcloud, interpolation='bilinear')
+plt.axis('off')
+plt.title('2. Word Cloud of Questions')
+plt.show()
