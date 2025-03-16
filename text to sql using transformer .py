@@ -180,3 +180,6 @@ plt.show()
 sns.pairplot(dv[['query_length', 'sql_complexity', 'num_conditions', 'sql_length']])
 plt.suptitle('7. Pairwise Relationships Between Features', verticalalignment='top')
 plt.show()
+
+X = df['question'].tolist()
+y = df['sql'].tolist()
