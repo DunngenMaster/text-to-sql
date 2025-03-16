@@ -132,3 +132,13 @@ def deletePunctuationSQL(sentence):
     return sentence.translate(translator)
 
 df['sql'] = df['sql'].apply(deletePunctuationSQL)
+
+#Plot question length
+df['questionTokens'] = df['question'].apply(lambda x: len(x.split()))
+plt.figure(figsize = (10, 6))
+
+sns.histplot(df['questionTokens'], bins = 30, kde = True)
+plt.title('1. Distribution Of Question Lengths')
+plt.xlabel('Question Length (in words)')
+plt.ylabel('Frequency')
+plt.show()
